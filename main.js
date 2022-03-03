@@ -6,31 +6,38 @@ var path = require('path')
 var sanitizeHtml = require('sanitize-html');
 var bodyParser = require('body-parser');  //post데이터 추출 미들웨어
 var compression = require('compression'); //압축 미들웨어
+app.use(express.static('exam'))
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression())
+app.get('*' ,(req, res, next) => {
+  fs.readdir('./data', function (error, filelist) { //./data 파일읽고 콜백함수 실행
+    req.list = filelist
+    next()
+  })
+})
+
 app.get('/', (req, res) => {
-  fs.readdir('./data', function (error, filelist) {  //./data 파일읽고 콜백함수 실행
+  console.log(haha);
     var title = 'Welcome';
     var description = 'Hello, Node.js';
-    var list = template.list(filelist); //template.js에 정의한 list함수 실행
+    var list = template.list(req.list); //template.js에 정의한 list함수 실행
     var html = template.HTML(title, list, //template.js에 정의한 Html함수 실행
-      `<h2>${title}</h2>${description}`,
+      `<h2>${title}</h2>${description}
+       <img src="/hello.jpg">
+      `,
       `<a href="/create">create</a>`
     );
     res.send(html);
-  })
 }) // 라우팅 기능.
-
 app.get('/page/:pageId', function (req, res) { //:로 전달된 부분은 req.params에 저장된다.
-  fs.readdir('./data', function (error, filelist) { //data디렉터리로 접근해 HTML이라는 이름의 파일을 가져옴.
-    var filteredId = path.parse(req.params.pageId).base;
+  var filteredId = path.parse(req.params.pageId).base;
     fs.readFile(`data/${filteredId}`, 'utf8', function (err, description) { //readfile을 했을 때 파일의 내용에 접근할 수 있다.
       var title = req.params.pageId;
       var sanitizedTitle = sanitizeHtml(title);
       var sanitizedDescription = sanitizeHtml(description, {
         allowedTags: ['h1']
       });
-      var list = template.list(filelist);
+      var list = template.list(req.list);
       var html = template.HTML(sanitizedTitle, list,
         `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
         ` <a href="/create">create</a>
@@ -41,14 +48,12 @@ app.get('/page/:pageId', function (req, res) { //:로 전달된 부분은 req.pa
                 </form>`
       );
       res.send(html)
-    });
-  })
+    })
 });
 
 app.get('/create', (req, res) => {
-  fs.readdir('./data', function (error, filelist) {
         var title = 'WEB - create';
-        var list = template.list(filelist);
+        var list = template.list(req.list);
         var html = template.HTML(title, list, `
           <form action="/create_process" method="post">
             <p><input type="text" name="title" placeholder="title"></p>
@@ -61,7 +66,6 @@ app.get('/create', (req, res) => {
           </form>
         `, '');
         res.send(html);
-      });
 })
 
 app.post('/create_process', (req, res) => {
@@ -69,8 +73,7 @@ app.post('/create_process', (req, res) => {
   var title = post.title;
   var description = post.description;
   fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
-    res.writeHead(302, { Location: `/?id=${title}` });
-    res.end();
+    res.redirect('/');
   })
   // req.on('data', function (data) {
   //   body = body + data;
