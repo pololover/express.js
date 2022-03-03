@@ -4,7 +4,10 @@ var fs = require('fs');
 var template = require('./lib/template.js')
 var path = require('path')
 var sanitizeHtml = require('sanitize-html');
-var qs = require('querystring');
+var bodyParser = require('body-parser');  //post데이터 추출 미들웨어
+var compression = require('compression'); //압축 미들웨어
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression())
 app.get('/', (req, res) => {
   fs.readdir('./data', function (error, filelist) {  //./data 파일읽고 콜백함수 실행
     var title = 'Welcome';
@@ -62,19 +65,25 @@ app.get('/create', (req, res) => {
 })
 
 app.post('/create_process', (req, res) => {
-  var body = '';
-  req.on('data', function (data) {
-    body = body + data;
-  });
-  req.on('end', function () {
-    var post = qs.parse(body);
-    var title = post.title;
-    var description = post.description;
-    fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
-      res.writeHead(302, { Location: `/?id=${title}` });
-      res.end();
-    })
-  });
+  var post = req.body;
+  var title = post.title;
+  var description = post.description;
+  fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+    res.writeHead(302, { Location: `/?id=${title}` });
+    res.end();
+  })
+  // req.on('data', function (data) {
+  //   body = body + data;
+  // });
+  // req.on('end', function () {
+  //   var post = qs.parse(body);
+  //   var title = post.title;
+  //   var description = post.description;
+  //   fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+  //     res.writeHead(302, { Location: `/?id=${title}` });
+  //     res.end();
+  //   })
+  // });
 });
 
 app.get('/update/:pageId', (req, res) => { // 해당 URL로 이동
@@ -104,7 +113,17 @@ app.get('/update/:pageId', (req, res) => { // 해당 URL로 이동
 });
 
 app.post('/update_process', (req, res) => {
-  var body = '';
+  var post = req.body;
+  var id = post.id;
+  var title = post.title;
+  var description = post.description;
+  fs.rename(`data/${id}`, `data/${title}`, function (error) {   //파일의 이름을 바꿔준다.
+    fs.writeFile(`data/${title}`, description, 'utf8', function (err) {  //파일 내용 갱신.
+      res.writeHead(302, { Location: `page/${title}` });
+      res.end();
+    })
+  });
+  /*
   req.on('data', function(data){
       body = body + data;
   });
@@ -120,21 +139,16 @@ app.post('/update_process', (req, res) => {
         })
       });
   });
+  */
 })
 
 app.post('/delete_process', (req, res) => {
-  var body = '';
-  req.on('data', function(data){
-    body = body + data;
-  });
-  req.on('end', function(){
-    var post = qs.parse(body);
-    var id = post.id;
-    var filteredId = path.parse(id).base;
-    fs.unlink(`data/${filteredId}`, function(error){
-      res.redirect('/');
-    })
-  });
+  var post = req.body; 
+  var id = post.id;
+  var filteredId = path.parse(id).base;
+  fs.unlink(`data/${filteredId}`, function(error){
+    res.redirect('/');
+  })
 })
 
 app.listen(3000, () => console.log('Example app listening on port 3000!')) //3000번 포트 등록.
