@@ -1,7 +1,19 @@
 const express = require('express')
 const app = express() //express함수를 실행해서 application 객체를 얻음
-
-app.get('/', (req, res) => res.send('/')) // 라우팅 기능.
+var fs = require('fs');
+var template = require('./lib/template.js')
+app.get('/', (req, res) => {
+  fs.readdir('./data', function (error, filelist) {  //./data 파일읽고 콜백함수 실행
+    var title = 'Welcome';
+    var description = 'Hello, Node.js';
+    var list = template.list(filelist); //template.js에 정의한 list함수 실행
+    var html = template.HTML(title, list, //template.js에 정의한 Html함수 실행
+      `<h2>${title}</h2>${description}`,
+      `<a href="/create">create</a>`
+    );
+    res.send(html);
+  })
+}) // 라우팅 기능.
 
 app.get('/page', (req, res) => res.send('/page'));
 
