@@ -2,6 +2,8 @@ const express = require('express')
 const app = express() //express함수를 실행해서 application 객체를 얻음
 var fs = require('fs');
 var template = require('./lib/template.js')
+var path = require('path')
+var sanitizeHtml = require('sanitize-html');
 app.get('/', (req, res) => {
   fs.readdir('./data', function (error, filelist) {  //./data 파일읽고 콜백함수 실행
     var title = 'Welcome';
@@ -15,7 +17,29 @@ app.get('/', (req, res) => {
   })
 }) // 라우팅 기능.
 
-app.get('/page', (req, res) => res.send('/page'));
+app.get('/page/:pageId', function (req, res) { //:로 전달된 부분은 req.params에 저장된다.
+  fs.readdir('./data', function (error, filelist) { //data디렉터리로 접근해 HTML이라는 이름의 파일을 가져옴.
+    var filteredId = path.parse(req.params.pageId).base;
+    fs.readFile(`data/${filteredId}`, 'utf8', function (err, description) { //readfile을 했을 때 파일의 내용에 접근할 수 있다.
+      var title = req.params.pageId;
+      var sanitizedTitle = sanitizeHtml(title);
+      var sanitizedDescription = sanitizeHtml(description, {
+        allowedTags: ['h1']
+      });
+      var list = template.list(filelist);
+      var html = template.HTML(sanitizedTitle, list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+        ` <a href="/create">create</a>
+                <a href="/update?id=${sanitizedTitle}">update</a>
+                <form action="delete_process" method="post">
+                  <input type="hidden" name="id" value="${sanitizedTitle}">
+                  <input type="submit" value="delete">
+                </form>`
+      );
+      res.send(html)
+    });
+  })
+});
 
 app.listen(3000, () => console.log('Example app listening on port 3000!')) //3000번 포트 등록.
 
