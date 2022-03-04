@@ -51,8 +51,9 @@ path를 이용하면 원하는 경로까지 쿠키를 유지시킬 수 있게된
 domain을 이용하면 서브도메인까지 유지시킬 수 있게 된다. 예를들어 domain기능을 사용하지 않은 상태로 www.tistory.com 서버에서 생성했을 때 ww.tistory.com이나 seunghyun.tistory.com 서버에는 접근할 수 없게된다. 이를 domain속성을 통해 'tistory_cookie=cheon; Domain=.tistory.com' 을 하게 되면 .이 붙으면서 서브도메인에 대한 쿠키들을 저장할 수 있게 된다.
 
 
-
-
-
+cookie express
+-----
+express 환경에서는 cookie에 대한 부분을 자유롭게 작성할 수 있다. 방법은 cookie-parser미들웨어를 use시키면 된다.
+이는 쿠키에 대한 설정 및 가져오기를 할 수 있고. 프론트단에서 request로 보낸 것에 cookies가 파싱 된 상태로 전달되기 때문에 유용하다.
 
 
