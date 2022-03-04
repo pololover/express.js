@@ -17,7 +17,6 @@ app.get('*' ,(req, res, next) => {
 })
 
 app.get('/', (req, res) => {
-  console.log(haha);
     var title = 'Welcome';
     var description = 'Hello, Node.js';
     var list = template.list(req.list); //template.js에 정의한 list함수 실행
@@ -29,9 +28,13 @@ app.get('/', (req, res) => {
     );
     res.send(html);
 }) // 라우팅 기능.
-app.get('/page/:pageId', function (req, res) { //:로 전달된 부분은 req.params에 저장된다.
+app.get('/page/:pageId', function (req, res, next) { //:로 전달된 부분은 req.params에 저장된다.
   var filteredId = path.parse(req.params.pageId).base;
-    fs.readFile(`data/${filteredId}`, 'utf8', function (err, description) { //readfile을 했을 때 파일의 내용에 접근할 수 있다.
+  fs.readFile(`data/${filteredId}`, 'utf8', function (err, description) { //readfile을 했을 때 파일의 내용에 접근할 수 있다.
+    if (err) {
+      next(err);
+    }
+    else {
       var title = req.params.pageId;
       var sanitizedTitle = sanitizeHtml(title);
       var sanitizedDescription = sanitizeHtml(description, {
@@ -41,15 +44,17 @@ app.get('/page/:pageId', function (req, res) { //:로 전달된 부분은 req.pa
       var html = template.HTML(sanitizedTitle, list,
         `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
         ` <a href="/create">create</a>
-                <a href="/update/${sanitizedTitle}">update</a>
-                <form action="/delete_process" method="post">
-                  <input type="hidden" name="id" value="${sanitizedTitle}">
-                  <input type="submit" value="delete">
-                </form>`
+                  <a href="/update/${sanitizedTitle}">update</a>
+                  <form action="/delete_process" method="post">
+                    <input type="hidden" name="id" value="${sanitizedTitle}">
+                    <input type="submit" value="delete">
+                  </form>`
       );
       res.send(html)
+      }
     })
 });
+
 
 app.get('/create', (req, res) => {
         var title = 'WEB - create';
@@ -152,6 +157,15 @@ app.post('/delete_process', (req, res) => {
   fs.unlink(`data/${filteredId}`, function(error){
     res.redirect('/');
   })
+})
+
+app.use(function (req, res, next) {
+  res.status(404).send('Sorry cant find that!');
+});
+
+app.use(function (err, req, res, next) {
+  console.log(err.stack);
+  res.status(500).send('Something break');
 })
 
 app.listen(3000, () => console.log('Example app listening on port 3000!')) //3000번 포트 등록.
