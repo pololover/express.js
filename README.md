@@ -45,6 +45,14 @@ Secure는 https의 한에서만 쿠키를 전송함으로써 사용자의 정보
 HttpOnly는 http탕비에 대해서만 쿠키를 전송하기 때문에 javascript와 같은 환경에서는 참조할 수 없게 된다.
 
 
+cookie 접근범위
+----
+path를 이용하면 원하는 경로까지 쿠키를 유지시킬 수 있게된다.
+domain을 이용하면 서브도메인까지 유지시킬 수 있게 된다. 예를들어 domain기능을 사용하지 않은 상태로 www.tistory.com 서버에서 생성했을 때 ww.tistory.com이나 seunghyun.tistory.com 서버에는 접근할 수 없게된다. 이를 domain속성을 통해 'tistory_cookie=cheon; Domain=.tistory.com' 을 하게 되면 .이 붙으면서 서브도메인에 대한 쿠키들을 저장할 수 있게 된다.
+
+
+
+
 
 
 
