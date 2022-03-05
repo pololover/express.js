@@ -21,9 +21,16 @@ function authenIs(req, res) {
     return isOwner
   }
 }
+
+authStatusUIs = function (req, res) {
+  var authStatusUI = '<a href="/login">로그인</a>';
+  if (authenIs(req, res)) {
+    authStatusUI = '<a href="/login/logout_process">logout</a>';
+  }
+  return authStatusUI
+}
 app.get('*', function (request, response, next) {
-  var isOwner = authenIs(request, response);
-  console.log(isOwner);
+  request.authen = authStatusUIs(request, response);
   fs.readdir('./data', function (error, filelist) {
     request.list = filelist;  
     next();
