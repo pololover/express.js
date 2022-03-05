@@ -59,3 +59,10 @@ express 환경에서는 cookie에 대한 부분을 자유롭게 작성할 수 �
 
 logout하는 과정에서 post요청으로 받아서 살짝 헤맸음. -> get요청으로.
 전역변수의 사용은 줄이고 require를 적극 활용 -> 변수의 충돌 방지.
+
+
+session
+-----
+cookie는 값들이 브라우저에 저장되면서 평문으로 보내지기 때문에 보안에서 위험이 있다. 그래서 나온게 session
+express환경에서 session은 암호화해서 session_id값을 서버에 저장시킬 수 있고(session-file-store 이용) 생성된 session_id값만을 이용하여 서버에 저장된 데이터를 사용할 수 있다.
+
