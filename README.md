@@ -66,3 +66,4 @@ session
 cookie는 값들이 브라우저에 저장되면서 평문으로 보내지기 때문에 보안에서 위험이 있다. 그래서 나온게 session
 express환경에서 session은 암호화해서 session_id값을 서버에 저장시킬 수 있고(session-file-store 이용) 생성된 session_id값만을 이용하여 서버에 저장된 데이터를 사용할 수 있다.
 
+session.destroy를 이용하면 session정보들을 다 없애준다.
