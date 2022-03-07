@@ -147,7 +147,10 @@ router.post('/login_process', function (req, res, next) {
   });
 
 ```
-
+passport 작동순서(local 환경 로그인 프로세스)
+-----
+login_process 라우트 이동 -> passport.authenticate 로컬전략 이용 -> localStrategy 내부에서 db데이터 식별확인 후 찾았다면 serialize로 객체전달. 
+-> serialize 내부에서 done(null, user.id)를 통해 세션 스토어에 데이터 저장. -> 다시 authenticate로 돌아와서 콜백함수 실행 -> 콜백함수 내부에서 request.login이 존재하고 이 안에서 request.session.save을 통해 정보가 저장될때 redirect하게 설계.
 
 
 
