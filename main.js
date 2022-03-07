@@ -6,70 +6,38 @@ var bodyParser = require('body-parser');
 var compression = require('compression')
 var topicRouter = require('./routes/topic');
 var indexRouter = require('./routes/index');
-var authRouter = require('./routes/authRoute');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session)
+var flash = require('connect-flash')
 app.use(express.static('exam'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
 app.use(cookieParser());
 app.use(session({
   secret: 'fdasjkllkaf@!@!dsad',
-  resave: false,
   saveUninitialized: true,
+  resave: false,
   store:new FileStore()
 }))
-var authData = {
-  email: 'csh7215@naver.com',
-  password: '11111',
-  nickname: 'cheon'
-}
+app.use(flash())
 
-var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;
+var passport = require('./lib/passport')(app);
 
-app.use(passport.initialize());
-app.use(passport.session());
-passport.serializeUser(function (user, done) {
-  console.log('serail', user);
-  done(null, user.email);
-});
-passport.deserializeUser(function (id, done) {
-  console.log('desrial', id);
-  done(null, id);
-});
 
-passport.use(new LocalStrategy(
-  {
-    usernameField: 'email', //form name값을 커스텀해주는 곳.
-    passwordField: 'pwd',
-  },
-  function (username, password, done) {
-    if (username == authData.email) {
-      if (password == authData.password) {
-        return done(null, authData)
-      } else {
-        return done(null, false, {
-          message : 'Incorrect password'
-        })
-      }
-    } else {
-      return done(null, false, {
-        message: 'Incorrect username'
-      })
-    }
-  }
-));
+
+var authRouter = require('./routes/authRoute')(passport);
 //3번째 인자로 콜백을 줘서 login처리하게.
-app.post('/auth/login_process',
-  passport.authenticate('local', { //id와 password로 로그인하는 전략을 취함.
-    failureRedirect: '/auth/login'
-  }),
-    function(req, res) {
-      req.session.save(function () {
-        console.log('redirect');
-        res.redirect('/');
-      })
-    })
+// app.post('/auth/login_process',
+//   passport.authenticate('local', { //id와 password로 로그인하는 전략을 취함.
+//     failureRedirect: '/auth/login',
+//     failureFlash: true
+//   }),
+//     function(req, res) {
+//       req.session.save(function () {
+//         console.log('redirect');
+//         res.redirect('/');
+//       })
+//     })
 
 
 
