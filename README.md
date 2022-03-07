@@ -67,3 +67,90 @@ cookie는 값들이 브라우저에 저장되면서 평문으로 보내지기 �
 express환경에서 session은 암호화해서 session_id값을 서버에 저장시킬 수 있고(session-file-store 이용) 생성된 session_id값만을 이용하여 서버에 저장된 데이터를 사용할 수 있다.
 
 session.destroy를 이용하면 session정보들을 다 없애준다.
+
+passport
+-----
+모던 웹앱은 SNS네트워킹이 활성화되면서 트위터나 페이스북과 같은 연동로그인의 필요성이 높아졌다. 이러한 배경 속에서 OAuth를 제공하는 API들은 토큰 기반의 증명서를 요구한다.
+passport는 구글로 로그인할 것인가, 페이스북으로 로그인할 것인가, 로컬로 로그인할 것인가와 같은 전략들을 각각 모듈화시켜 패키지로 제공한다. 때문에 passport문법에 맞춰 독립적으로 통일된 백엔드로직을 설계할 수가 있게 된다.
+
+passport 사용방법
+```
+// main.js
+var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;  //passport모듈에서 불러오고, local전략을 이용
+
+app.use(passport.initialize()); //passport 초기화
+app.use(passport.session()); //passport가 session을 사용한다.
+
+passport.serializeUser(function (user, done) {
+  done(null, user.email);
+});
+//파일이 리로드 될때마다 세션스토어에 있는 id값을 통해 db에 접근해 정보들을 가져오는 공간.
+passport.deserializeUser(function (id, done) {
+  done(null, authData); //request.user를 추가해주게 됨. 
+});
+//로컬 전략
+passport.use(new LocalStrategy(
+    {
+      usernameField: 'email', //form name값을 커스텀해주는 곳.
+      passwordField: 'pwd',
+    },
+    function (username, password, done) {
+      if (username == authData.email) {
+        if (password == authData.password) {
+          return done(null, authData)
+        } else {
+          return done(null, false, {
+            message: 'Incorrect password'
+          })
+        }
+      } else {
+        return done(null, false, {
+          message: 'Incorrect username'
+        })
+      }
+    }
+  ));
+```
+```
+// authRoute.js -> 인증 관련로직들은 전부 authRoute에 존재.
+router.post('/login_process', function (req, res, next) {
+    passport.authenticate('local', function (err, user, info) {
+      console.log(info);
+      if (info) { // info로 들어온 플래시 메세지 처리
+        req.session.flash.error = [info.message];
+      } else {
+        req.session.flash.success = ['Welcome.'];
+      }
+      if (err) {
+        return next(err);
+      }
+      if (!user) { // user에 정보가 안들어 왔을 경우
+        return req.session.save(function (err) {
+          if (err) {
+            return next(err);
+          }
+          return res.redirect('/auth/login');
+        })
+      }
+      req.logIn(user, function (err) { // (아마) 첫번재 인자를 serializeUser로 넘기고 콜백으로 그 이후 처리를 작성
+        if (err) {
+          return next(err);
+        }
+        return req.session.save(function (err) {
+          if (err) {
+            return next(err);
+          }
+          return res.redirect('/');
+        });
+      });
+    })(req, res, next);
+  });
+
+```
+
+
+
+
+
+
+
