@@ -2,10 +2,9 @@ var express = require('express');
 const { request } = require('http');
 var router = express.Router()
 var template = require('../lib/template');
-
-
-module.exports = function (passport) {
-
+var db = require('../lib/db');
+const shortid = require('shortid');
+module.exports = function (passport) { 
   //route, routing
   //app.get('/', (req, res) => res.send('Hello World!'))
   router.get('/login', function (request, response) {
@@ -32,11 +31,10 @@ module.exports = function (passport) {
 
 
   router.post('/login_process', function (req, res, next) {
-    passport.authenticate('local', function (err, user, info) {
-      console.log(info);
+    passport.authenticate('local', function (err, user, info) {  //마지막에 passport에서 여기로 오는 구조.
       if (info) { // info로 들어온 플래시 메세지 처리
         req.session.flash.error = [info.message];
-      } else {
+      } else {0
         req.session.flash.success = ['Welcome.'];
       }
       if (err) {
@@ -50,7 +48,8 @@ module.exports = function (passport) {
           return res.redirect('/auth/login');
         })
       }
-      req.logIn(user, function (err) { // (아마) 첫번재 인자를 serializeUser로 넘기고 콜백으로 그 이후 처리를 작성
+      req.logIn(user, function (err) { 
+        console.log('authRoute_login', user, info);
         if (err) {
           return next(err);
         }
@@ -87,6 +86,62 @@ module.exports = function (passport) {
       res.redirect('/');
     })
   })
+
+  //register section
+  router.get('/register', function (request, response) {
+    console.log(request.session);
+    var fmsg = request.flash();
+    var feedback = '';
+    if (fmsg.error) {
+      feedback = fmsg.error[0];
+    }
+    var title = 'Register';
+    var list = template.list(request.list);
+    var html = template.HTML(title, list,
+      `
+  <h1>${feedback}sadsa</h1>
+  <h2>${title}</h2>
+  <form action="/auth/register_process" method="post">
+    <p><input type="email" name="email" placeholder="email"></p>
+    <p><input type="password" name="pwd" placeholder="password"></p>
+    <p><input type="password" name="pwd2" placeholder="password"></p>
+    <p><input type="text" name="displayName" value="displayname"></p>
+    <input type="submit" value="register">
+    </form>
+  `, ''
+    );
+    response.send(html);
+  });
+
+  router.post('/register_process', function (request, response) {
+    var post = request.body;
+    var email = post.email;
+    var pwd = post.pwd;
+    var pwd2 = post.pwd2;
+    var displayName = post.displayName;
+    if (pwd !== pwd2) {
+      request.flash('error', 'password must not same!!');
+      request.session.save(function () {
+        response.redirect('/auth/register');   
+      })
+     
+    } else {
+      var user = {
+        id: shortid.generate(),
+        email: email,
+        password: pwd,
+        displayName: displayName
+      }
+      db.get('users').push(user).write();
+      request.login(user, function (err) {
+        request.session.save(function () {
+          return response.redirect('/');
+        })
+        });
+    }
+  });
+
+
 
   return router;  
 }
