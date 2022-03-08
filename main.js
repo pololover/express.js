@@ -8,7 +8,8 @@ var topicRouter = require('./routes/topic');
 var indexRouter = require('./routes/index');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session)
-var flash = require('connect-flash')
+var flash = require('connect-flash');
+var db = require('./lib/db');
 app.use(express.static('exam'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
@@ -22,8 +23,6 @@ app.use(session({
 app.use(flash())
 
 var passport = require('./lib/passport')(app);
-
-
 
 var authRouter = require('./routes/authRoute')(passport);
 //3번째 인자로 콜백을 줘서 login처리하게.
@@ -62,10 +61,9 @@ var authRouter = require('./routes/authRoute')(passport);
 app.get('*', function (request, response, next) {
   // request.isOwner = authenIs(request, response);
   // request.authen = authStatusUIs(request, response);
-  fs.readdir('./data', function (error, filelist) {
-    request.list = filelist;  
-    next();
-  });
+  var filelist = db.get('topics').value();
+  request.list = filelist;  
+  next();
 });
 
 // app.post('*', function (req, res, next) {
