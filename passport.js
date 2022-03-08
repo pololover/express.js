@@ -7,7 +7,8 @@ module.exports = function (app) {
     nickname: 'cheon'
   }
 
-  var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;
+  var passport = require('passport'), LocalStrategy = require('passport-local').Strategy,
+      GoogleStrategy = require('passport-google-oauth2').Strategy;
 
   app.use(passport.initialize()); //passport 초기화
   app.use(passport.session()); //passport가 session을 사용한다.
@@ -39,6 +40,19 @@ module.exports = function (app) {
           message: 'Incorrect password'
         })
       }
+    }
+  ));
+  var googleCredential = require('../config/google.json');
+  passport.use(new GoogleStrategy({
+    clientID: googleCredential.web.client_id,
+    clientSecret: googleCredential.web.client_secret,
+    callbackURL: googleCredential.web.redirect_uris,
+    passReqToCallback: true
+  },
+    function (request, accessToken, refreshToken, profile, done) {
+      User.findOrCreate({ googleId: profile.id }, function (err, user) {
+        return done(err, user);
+      });
     }
   ));
   return passport;
