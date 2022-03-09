@@ -46,15 +46,34 @@ module.exports = function (app) {
   passport.use(new GoogleStrategy({
     clientID: googleCredential.web.client_id,
     clientSecret: googleCredential.web.client_secret,
-    callbackURL: googleCredential.web.redirect_uris,
+    callbackURL: googleCredential.web.redirect_uris[0],
     passReqToCallback: true
   },
     function (request, accessToken, refreshToken, profile, done) {
-      User.findOrCreate({ googleId: profile.id }, function (err, user) {
-        return done(err, user);
-      });
+      // User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      //   return done(err, user);
+      // });
+      var email = profile.emails[0].value;
+      var user = db.get('users').find({ email: email }).value();
+      db.get('users').find({ id: user.id }).assign({googleId : profile.id}).write();
+      done(null, user);
     }
   ));
+
+  app.get('/auth/google',
+    passport.authenticate('google', {
+      scope:
+        ['https://www.googleapis.com/auth/plus.login', 'email']
+      }
+    ));
+  
+  app.get('/auth/google/callback',
+    passport.authenticate('google', {
+      failureRedirect: '/auth/login'
+    }),
+    function (req, res) {
+      res.redirect('/');
+  });
   return passport;
 }
 
